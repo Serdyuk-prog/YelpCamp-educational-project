@@ -7,7 +7,7 @@ const methodOverride = require("method-override");
 const Campground = require("./models/campground");
 const catchAsyc = require("./utils/catchAsync");
 const ExpressError = require("./utils/ExpressError");
-const { campgroundSchema } = require("./schemas.js");
+const { campgroundSchema, reviewSchema } = require("./schemas.js");
 const Review = require("./models/review");
 
 mongoose
@@ -38,6 +38,17 @@ const validateCampground = (req, res, next) => {
         next();
     }
 };
+
+const validateReview = (req, res, next) => {
+    const { error } = reviewSchema.validate(req.body);
+    console.log(error);
+    if (error) {
+        const msg = error.details.map((el) => el.message).join(",");
+        throw new ExpressError(msg, 400);
+    } else {
+        next();
+    }
+}
 
 app.get("/", (req, res) => {
     res.render("home");
@@ -103,7 +114,8 @@ app.delete(
 );
 
 app.post(
-    "/canpgrounds/:id/reviews",
+    "/campgrounds/:id/reviews",
+    validateReview,
     catchAsyc(async (req, res) => {
         const campground = await Campground.findById(req.params.id);
         const review = new Review(req.body.review);
@@ -113,6 +125,7 @@ app.post(
         res.redirect(`/campgrounds/${campground._id}`);
     })
 );
+
 
 app.all("*", (req, res, next) => {
     next(new ExpressError("Page Not Found!", 404));
