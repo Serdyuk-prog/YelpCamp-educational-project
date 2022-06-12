@@ -48,7 +48,7 @@ const validateReview = (req, res, next) => {
     } else {
         next();
     }
-}
+};
 
 app.get("/", (req, res) => {
     res.render("home");
@@ -79,7 +79,7 @@ app.post(
 app.get(
     "/campgrounds/:id",
     catchAsyc(async (req, res) => {
-        const campground = await Campground.findById(req.params.id);
+        const campground = await Campground.findById(req.params.id).populate("reviews");
         res.render("campgrounds/show", { campground });
     })
 );
@@ -126,6 +126,15 @@ app.post(
     })
 );
 
+app.delete(
+    "/campgrounds/:id/reviews/:reviewId",
+    catchAsyc(async (req, res) => {
+        const { id, reviewId } = req.params;
+        await Campground.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+        await Review.findByIdAndDelete(reviewId);
+        res.redirect(`/campgrounds/${id}`);
+    })
+);
 
 app.all("*", (req, res, next) => {
     next(new ExpressError("Page Not Found!", 404));
