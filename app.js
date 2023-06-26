@@ -19,6 +19,9 @@ const { campgroundSchema, reviewSchema } = require("./schemas.js");
 const Review = require("./models/review");
 const User = require("./models/user");
 
+// const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+
 const usersRoutes = require("./routes/users");
 const campgroundsRoutes = require("./routes/campgrounds");
 const reviewsRouters = require("./routes/reviews");
@@ -36,11 +39,13 @@ const db = mongoose.connection;
 const app = express();
 
 const sessionConfig = {
+    name: 'session',
     secret: "thisisasecret",
     resave: false,
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
+        // secure: true, // only assessable with HTTPS
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge: 1000 * 60 * 60 * 24 * 7,
     },
@@ -55,8 +60,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use(mongoSanitize({
+    replaceWith: '_'
+}));
+
+
 app.use(session(sessionConfig));
 app.use(flash());
+// app.use(helmet({contentSecurityPolicy: false}));
+
 
 app.use(passport.initialize());
 app.use(passport.session());
